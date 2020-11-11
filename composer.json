@@ -1,0 +1,28 @@
+{
+    "name": "jbirch8865/azure-auth",
+    "description": "Applies middleware to authenticate via azure ad",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Joel",
+            "email": "jbirch88655@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "thenetworg/oauth2-azure": "dev-master"
+    },
+    "autoload": {
+        "psr-4": {
+            "jbirch8865\\AzureAuth\\" : "src/"    
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "jbirch8865\\AzureAuth\\AzureAuthServiceProvider"
+            ]
+        }
+    }
+}

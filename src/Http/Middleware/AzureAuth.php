@@ -26,7 +26,7 @@ class AzureAuth
             $token = $provider->validateAccessToken($request->header('Authorization'));
         }catch(\Exception $e)
         {
-            return response()->json(["message" => "Unauthorized"],401);
+            return response()->json(["message" => "Unauthorized","dev_details" => $e->getMessage()],401);
         }
         return $next($request);
     }

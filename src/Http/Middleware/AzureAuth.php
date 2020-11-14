@@ -4,9 +4,20 @@ namespace jbirch8865\AzureAuth\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-
+use TheNetworg\OAuth2\Client\Provider\Azure;
+use League\OAuth2\Client\Provider\ResourceOwnerInterface;
+use League\OAuth2\Client\Token\AccessToken;
 class AzureAuth
 {
+    private Azure $provider;
+    function __construct()
+    {
+        $this->provider = new Azure([
+            'clientId'          => env('azureClientID'),
+            'clientSecret'      => env('azureClientSecret'),
+            'redirectUri'       => env('azureRedirectUri')
+        ]);        
+    }
     /**
      * Handle an incoming request.
      *
@@ -16,18 +27,19 @@ class AzureAuth
      */
     public function handle(Request $request, Closure $next)
     {
-        $provider = new \TheNetworg\OAuth2\Client\Provider\Azure([
-            'clientId'          => env('azureClientID'),
-            'clientSecret'      => env('azureClientSecret'),
-            'redirectUri'       => env('azureRedirectUri')
-        ]);
         try
         {
-            $token = $provider->validateAccessToken($request->header('Authorization'));
+            $token = $this->provider->validateAccessToken($request->header('Authorization'));
         }catch(\Exception $e)
         {
             return response()->json(["message" => "Unauthorized","dev_details" => $e->getMessage()],401);
         }
         return $next($request);
+    }
+
+    public function Get_User_Oid(Request $request) : string
+    {
+        $token = $this->provider->validateAccessToken($request->header('Authorization'));
+        return $token['oid'];
     }
 }

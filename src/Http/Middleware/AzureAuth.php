@@ -27,6 +27,10 @@ class AzureAuth
      */
     public function handle(Request $request, Closure $next)
     {
+        if(strpos(request()->route()->uri,"no_auth"))
+        {
+            return $next($request);
+        }
         try
         {
             $token = $this->provider->validateAccessToken($request->header('Authorization'));

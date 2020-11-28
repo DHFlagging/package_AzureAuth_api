@@ -4,6 +4,7 @@ namespace jbirch8865\AzureAuth\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 use TheNetworg\OAuth2\Client\Provider\Azure;
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
 use League\OAuth2\Client\Token\AccessToken;
@@ -27,10 +28,6 @@ class AzureAuth
      */
     public function handle(Request $request, Closure $next)
     {
-        if(strpos(request()->route()->uri,"no_auth"))
-        {
-            return $next($request);
-        }
         try
         {
             $token = $this->provider->validateAccessToken($request->header('Authorization'));

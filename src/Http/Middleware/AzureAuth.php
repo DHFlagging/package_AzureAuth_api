@@ -43,4 +43,12 @@ class AzureAuth
         $token = $this->provider->validateAccessToken($request->header('Authorization'));
         return $token['oid'];
     }
+    
+    public function Get_User_Email(Request $request) : string
+    {
+        $token = $this->provider->validateAccessToken($request->header('Authorization'));
+        return $token['upn'];
+
+    }
+
 }

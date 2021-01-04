@@ -1,6 +1,6 @@
 <?php
 
-namespace jbirch8865\AzureAuth\Http\Middleware;
+namespace dhflagging\AzureAuth\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;

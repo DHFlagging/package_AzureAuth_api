@@ -1,7 +1,7 @@
 <?php
-namespace jbirch8865\AzureAuth;
+namespace dhflagging\AzureAuth;
 use Illuminate\Support\ServiceProvider;
-use jbirch8865\AzureAuth\Http\Middleware\AzureAuth;
+use dhflagging\AzureAuth\Http\Middleware\AzureAuth;
 use Illuminate\Contracts\Http\Kernel;
 
 class AzureAuthServiceProvider extends ServiceProvider

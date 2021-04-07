@@ -11,13 +11,18 @@ use League\OAuth2\Client\Token\AccessToken;
 class AzureAuth
 {
     private Azure $provider;
+    private array $ignore_routes = ['auth/redirect','auth/callback'];
     function __construct()
     {
         $this->provider = new Azure([
             'clientId'          => env('azureClientID'),
             'clientSecret'      => env('azureClientSecret'),
             'redirectUri'       => env('azureRedirectUri')
-        ]);        
+        ]);
+        ForEach(config('app.disable_auth',[]) as $route_string)
+        {
+            $this->ignore_routes[] = $route_string;
+        }
     }
     /**
      * Handle an incoming request.
@@ -30,7 +35,11 @@ class AzureAuth
     {
         try
         {
-            $token = $this->provider->validateAccessToken($request->header('Authorization'));
+            $regex = '#' . implode('|', $this->ignore_routes) . '#';
+            if(preg_match($regex,$request->path()) === false)
+            {
+                $token = $this->provider->validateAccessToken($request->header('Authorization'));
+            }
         }catch(\Exception $e)
         {
             return response()->json(["message" => "Unauthorized","dev_details" => $e->getMessage()],401);
@@ -40,12 +49,22 @@ class AzureAuth
 
     public function Get_User_Oid(Request $request) : string
     {
+        $regex = '#' . implode('|', $this->ignore_routes) . '#';
+        if(preg_match($regex,$request->path()) === false)
+        {
+            return '';
+        }
         $token = $this->provider->validateAccessToken($request->header('Authorization'));
         return $token['oid'];
     }
-    
+
     public function Get_User_Email(Request $request) : string
     {
+        $regex = '#' . implode('|', $this->ignore_routes) . '#';
+        if(preg_match($regex,$request->path()) === false)
+        {
+            return '';
+        }
         $token = $this->provider->validateAccessToken($request->header('Authorization'));
         return $token['upn'];
 

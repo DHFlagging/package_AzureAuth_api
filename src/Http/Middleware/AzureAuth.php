@@ -36,7 +36,7 @@ class AzureAuth
         try
         {
             $regex = '#' . implode('|', $this->ignore_routes) . '#';
-            if(preg_match($regex,$request->path()) === false)
+            if(preg_match($regex,$request->path()) === 0)
             {
                 $token = $this->provider->validateAccessToken($request->header('Authorization'));
             }
@@ -50,7 +50,7 @@ class AzureAuth
     public function Get_User_Oid(Request $request) : string
     {
         $regex = '#' . implode('|', $this->ignore_routes) . '#';
-        if(preg_match($regex,$request->path()) === false)
+        if(preg_match($regex,$request->path()) === 0)
         {
             return '';
         }
@@ -61,7 +61,7 @@ class AzureAuth
     public function Get_User_Email(Request $request) : string
     {
         $regex = '#' . implode('|', $this->ignore_routes) . '#';
-        if(preg_match($regex,$request->path()) === false)
+        if(preg_match($regex,$request->path()) === 0)
         {
             return '';
         }

@@ -52,10 +52,10 @@ class AzureAuth
         $regex = '#' . implode('|', $this->ignore_routes) . '#';
         if(preg_match($regex,$request->path()) === 0)
         {
-            return '';
+            $token = $this->provider->validateAccessToken($request->header('Authorization'));
+            return $token['oid'];
         }
-        $token = $this->provider->validateAccessToken($request->header('Authorization'));
-        return $token['oid'];
+        return '';
     }
 
     public function Get_User_Email(Request $request) : string
@@ -63,11 +63,10 @@ class AzureAuth
         $regex = '#' . implode('|', $this->ignore_routes) . '#';
         if(preg_match($regex,$request->path()) === 0)
         {
-            return '';
+            $token = $this->provider->validateAccessToken($request->header('Authorization'));
+            return $token['upn'];
         }
-        $token = $this->provider->validateAccessToken($request->header('Authorization'));
-        return $token['upn'];
-
+        return '';
     }
 
 }

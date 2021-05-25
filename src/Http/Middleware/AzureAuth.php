@@ -2,6 +2,7 @@
 
 namespace dhflagging\AzureAuth\Http\Middleware;
 
+use App\Http\Middleware\PreventRequestsDuringMaintenance;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -12,6 +13,8 @@ class AzureAuth
 {
     private Azure $provider;
     private array $ignore_routes = ['auth/redirect','auth/callback'];
+    private string $user_oid = '';
+    private string $email = '';
     function __construct()
     {
         $this->provider = new Azure([
@@ -33,40 +36,103 @@ class AzureAuth
      */
     public function handle(Request $request, Closure $next)
     {
-        try
+        if($this->ignoreRoute($request) === false)
         {
-            $regex = '#' . implode('|', $this->ignore_routes) . '#';
-            if(preg_match($regex,$request->path()) === 0)
+            try {
+                $this->validAuthHeader($request);
+                $this->setEmail($request);
+                $this->setOid($request);
+            }catch(\Exception $e)
             {
-                $token = $this->provider->validateAccessToken($request->header('Authorization'));
+                return response()->json(['message' => 'unauthorized']);
             }
-        }catch(\Exception $e)
-        {
-            return response()->json(["message" => "Unauthorized","dev_details" => $e->getMessage()],401);
         }
         return $next($request);
     }
 
     public function Get_User_Oid(Request $request) : string
     {
-        $regex = '#' . implode('|', $this->ignore_routes) . '#';
-        if(preg_match($regex,$request->path()) === 0)
-        {
-            $token = $this->provider->validateAccessToken($request->header('Authorization'));
-            return $token['oid'];
-        }
-        return '';
+        return $this->user_oid;
     }
 
     public function Get_User_Email(Request $request) : string
     {
-        $regex = '#' . implode('|', $this->ignore_routes) . '#';
-        if(preg_match($regex,$request->path()) === 0)
-        {
-            $token = $this->provider->validateAccessToken($request->header('Authorization'));
-            return $token['upn'];
-        }
-        return '';
+        return $this->email;
     }
 
+    private function validAuthHeader(Request $request) : bool
+    {
+        if($this->deviceAuthorizing($request)) {
+            if ($this->userHeaderPresent($request))
+            {
+                return true;
+            }
+            throw new \Exception('no user present');
+        }else
+        {
+            $this->getToken($request);
+            return true;
+        }
+    }
+
+    private function setEmail(Request $request) : void
+    {
+        if($this->deviceAuthorizing($request))
+        {
+            $this->email = 'support@d-hflagging.com';
+        }else
+        {
+            $token = $this->getToken($request);
+            $this->email = $token['upn'];
+        }
+    }
+
+    private function setOid(Request $request) : void
+    {
+        if($this->deviceAuthorizing($request))
+        {
+            $this->user_oid = (string) $request->header('User','');
+        }else
+        {
+            $token = $this->getToken($request);
+            $this->email = $token['oid'];
+        }
+    }
+
+    private function deviceAuthorizing(Request $request) : bool
+    {
+        if(str_starts_with($request->header('Authorization',false),'Bearer '))
+        {
+            return true;
+        }
+        return false;
+    }
+
+    private function validDevice(Request $request) : bool
+    {
+        return in_array(substr($request->header('Authorization'),7),config('azureauth.authorized_devices'));
+    }
+
+    private function userHeaderPresent(Request $request) : bool
+    {
+        if($request->header('User',false) && is_string($request->header('User')) === true)
+        {
+            return true;
+        }
+        return false;
+    }
+
+    private function ignoreRoute(Request $request) : bool
+    {
+        $regex = '#' . implode('|', $this->ignore_routes) . '#';
+        if (preg_match($regex, $request->path()) !== 0) {
+            return true;
+        }
+        return false;
+    }
+
+    private function getToken(Request $request) : array
+    {
+        return $this->provider->validateAccessToken($request->header('Authorization'));
+    }
 }

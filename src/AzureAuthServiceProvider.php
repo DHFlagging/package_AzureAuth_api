@@ -8,8 +8,11 @@ class AzureAuthServiceProvider extends ServiceProvider
 {
     public function boot() : void
     {
+        $this->publishes([
+            __DIR__ . '/../config/azureauth.php' => config_path('azureauth.php'),
+        ]);
         $kernel = $this->app->make(Kernel::class);
-        $kernel->pushMiddleware(AzureAuth::class);    
+        $kernel->pushMiddleware(AzureAuth::class);
     }
 
     public function register() : void

@@ -18,9 +18,9 @@ class AzureAuth
     function __construct()
     {
         $this->provider = new Azure([
-            'clientId'          => env('azureClientID'),
-            'clientSecret'      => env('azureClientSecret'),
-            'redirectUri'       => env('azureRedirectUri')
+            'clientId'          => config('azureauth.azureClientID'),
+            'clientSecret'      => config('azureauth.azureClientSecret'),
+            'redirectUri'       => config('azureauth.azureRedirectUri')
         ]);
         ForEach(config('app.disable_auth',[]) as $route_string)
         {
@@ -39,7 +39,7 @@ class AzureAuth
         if($this->ignoreRoute($request) === false)
         {
             try {
-                $this->validAuthHeader($request);
+                $this->validateAuthHeader($request);
                 $this->setEmail($request);
                 $this->setOid($request);
             }catch(\Exception $e)
@@ -50,52 +50,27 @@ class AzureAuth
         return $next($request);
     }
 
-    public function Get_User_Oid(Request $request) : string
+    private function ignoreRoute(Request $request) : bool
     {
-        return $this->user_oid;
+        $regex = '#' . implode('|', $this->ignore_routes) . '#';
+        if (preg_match($regex, $request->path()) === 1) {
+            return true;
+        }
+        return false;
     }
 
-    public function Get_User_Email(Request $request) : string
-    {
-        return $this->email;
-    }
-
-    private function validAuthHeader(Request $request) : bool
+    private function validateAuthHeader(Request $request) : bool
     {
         if($this->deviceAuthorizing($request)) {
-            if ($this->userHeaderPresent($request))
+            if ($this->userHeaderPresent($request) && $this->validDevice($request))
             {
                 return true;
             }
-            throw new \Exception('no user present');
+            throw new \Exception('no user present or invalid device');
         }else
         {
             $this->getToken($request);
             return true;
-        }
-    }
-
-    private function setEmail(Request $request) : void
-    {
-        if($this->deviceAuthorizing($request))
-        {
-            $this->email = 'support@d-hflagging.com';
-        }else
-        {
-            $token = $this->getToken($request);
-            $this->email = $token['upn'];
-        }
-    }
-
-    private function setOid(Request $request) : void
-    {
-        if($this->deviceAuthorizing($request))
-        {
-            $this->user_oid = (string) $request->header('User','');
-        }else
-        {
-            $token = $this->getToken($request);
-            $this->email = $token['oid'];
         }
     }
 
@@ -122,17 +97,43 @@ class AzureAuth
         return false;
     }
 
-    private function ignoreRoute(Request $request) : bool
-    {
-        $regex = '#' . implode('|', $this->ignore_routes) . '#';
-        if (preg_match($regex, $request->path()) !== 0) {
-            return true;
-        }
-        return false;
-    }
-
     private function getToken(Request $request) : array
     {
         return $this->provider->validateAccessToken($request->header('Authorization'));
     }
+
+    private function setEmail(Request $request) : void
+    {
+        if($this->deviceAuthorizing($request))
+        {
+            $this->email = config('azureauth.system_user_email');
+        }else
+        {
+            $token = $this->getToken($request);
+            $this->email = $token['upn'];
+        }
+    }
+
+    private function setOid(Request $request) : void
+    {
+        if($this->deviceAuthorizing($request))
+        {
+            $this->user_oid = (string) $request->header('User','');
+        }else
+        {
+            $token = $this->getToken($request);
+            $this->email = $token['oid'];
+        }
+    }
+
+    public function Get_User_Oid(Request $request) : string
+    {
+        return $this->user_oid;
+    }
+
+    public function Get_User_Email(Request $request) : string
+    {
+        return $this->email;
+    }
+
 }

@@ -11,7 +11,8 @@
   ],
   "minimum-stability": "dev",
   "require": {
-    "thenetworg/oauth2-azure": "dev-master"
+    "thenetworg/oauth2-azure": "dev-master",
+    "socialiteproviders/microsoft-azure": "dev-master"
   },
   "autoload": {
     "psr-4": {

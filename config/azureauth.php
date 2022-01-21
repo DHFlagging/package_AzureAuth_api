@@ -5,5 +5,6 @@ return [
     'azureRedirectUri' => env('azureRedirectUri'),
     'azureClientSecret' => env('azureClientSecret'),
     'azureClientID' => env('azureClientID'),
-    'authorized_devices' => env('external_authorized_devices',[])
+    'authorized_devices' => env('external_authorized_devices',[]),
+    'disable_auth' => ['_debugbar','css','js','livewire']
 ];

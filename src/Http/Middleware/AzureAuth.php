@@ -2,19 +2,18 @@
 
 namespace dhflagging\AzureAuth\Http\Middleware;
 
-use App\Http\Middleware\PreventRequestsDuringMaintenance;
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
 use TheNetworg\OAuth2\Client\Provider\Azure;
-use League\OAuth2\Client\Provider\ResourceOwnerInterface;
-use League\OAuth2\Client\Token\AccessToken;
+use Laravel\Socialite\Facades\Socialite;
+
 class AzureAuth
 {
     private Azure $provider;
     private array $ignore_routes = ['auth/redirect','auth/callback'];
     private string $user_oid = '';
     private string $email = '';
+    private array $user = [];
     function __construct()
     {
         $this->provider = new Azure([
@@ -22,7 +21,7 @@ class AzureAuth
             'clientSecret'      => config('azureauth.azureClientSecret'),
             'redirectUri'       => config('azureauth.azureRedirectUri')
         ]);
-        ForEach(config('app.disable_auth',[]) as $route_string)
+        ForEach(config('azureauth.disable_auth',[]) as $route_string)
         {
             $this->ignore_routes[] = $route_string;
         }
@@ -36,6 +35,7 @@ class AzureAuth
      */
     public function handle(Request $request, Closure $next)
     {
+        config(['services.azure.redirect' => url()->current()]);
         if($this->ignoreRoute($request) === false)
         {
             try {
@@ -44,7 +44,7 @@ class AzureAuth
                 $this->setOid($request);
             }catch(\Exception $e)
             {
-                return response()->json(['message' => 'unauthorized']);
+                return Socialite::driver('azure')->stateless()->redirect();
             }
         }
         return $next($request);
@@ -62,14 +62,14 @@ class AzureAuth
     private function validateAuthHeader(Request $request) : bool
     {
         if($this->deviceAuthorizing($request)) {
-            if ($this->userHeaderPresent($request) && $this->validDevice($request))
+            if ($this->validDevice($request))
             {
                 return true;
             }
             throw new \Exception('no user present or invalid device');
         }else
         {
-            $this->getToken($request);
+            $this->validateUser($request);
             return true;
         }
     }
@@ -88,18 +88,20 @@ class AzureAuth
         return in_array(substr($request->header('Authorization'),7),config('azureauth.authorized_devices'));
     }
 
-    private function userHeaderPresent(Request $request) : bool
+    private function validateUser(Request $request) : void
     {
-        if($request->header('User',false) && is_string($request->header('User')) === true)
+        try {
+            $this->user = $this->provider->validateAccessToken($request->header('Authorization'));
+        }catch(\Exception $e)
         {
-            return true;
+            $user = Socialite::driver('azure')->stateless()->user();
+            $this->user = ['upn' => $user->getEmail(),'oid' => $user->getId()];
         }
-        return false;
     }
 
     private function getToken(Request $request) : array
     {
-        return $this->provider->validateAccessToken($request->header('Authorization'));
+        return $this->user;
     }
 
     private function setEmail(Request $request) : void
@@ -118,7 +120,7 @@ class AzureAuth
     {
         if($this->deviceAuthorizing($request))
         {
-            $this->user_oid = (string) $request->header('User','');
+            $this->user_oid = (string) $request->header('User',config('azureauth.system_user_oid'));
         }else
         {
             $token = $this->getToken($request);

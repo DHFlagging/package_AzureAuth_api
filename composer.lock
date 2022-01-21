@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "146c293c7162dfc5d93384dc50ad0a33",
+    "content-hash": "755a90e60af35f99e2aedc698a16c69d",
     "packages": [
         {
             "name": "doctrine/inflector",
@@ -1712,6 +1712,57 @@
             "time": "2020-12-01T23:09:06+00:00"
         },
         {
+            "name": "socialiteproviders/microsoft",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/SocialiteProviders/Microsoft.git",
+                "reference": "3f4ec79e65c3a403a5fe70cccd28d23802f1981e"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/SocialiteProviders/Microsoft/zipball/3f4ec79e65c3a403a5fe70cccd28d23802f1981e",
+                "reference": "3f4ec79e65c3a403a5fe70cccd28d23802f1981e",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "php": "^7.2 || ^8.0",
+                "socialiteproviders/manager": "~4.0"
+            },
+            "default-branch": true,
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "SocialiteProviders\\Microsoft\\": ""
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Brian Faust",
+                    "email": "hello@brianfaust.de"
+                }
+            ],
+            "description": "Microsoft OAuth2 Provider for Laravel Socialite",
+            "keywords": [
+                "laravel",
+                "microsoft",
+                "oauth",
+                "provider",
+                "socialite"
+            ],
+            "support": {
+                "docs": "https://socialiteproviders.com/microsoft",
+                "issues": "https://github.com/socialiteproviders/providers/issues",
+                "source": "https://github.com/socialiteproviders/providers"
+            },
+            "time": "2021-12-13T00:31:27+00:00"
+        },
+        {
             "name": "socialiteproviders/microsoft-azure",
             "version": "dev-master",
             "source": {
@@ -3372,7 +3423,8 @@
     "minimum-stability": "dev",
     "stability-flags": {
         "thenetworg/oauth2-azure": 20,
-        "socialiteproviders/microsoft-azure": 20
+        "socialiteproviders/microsoft-azure": 20,
+        "socialiteproviders/microsoft": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,

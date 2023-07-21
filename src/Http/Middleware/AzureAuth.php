@@ -4,6 +4,7 @@ namespace dhflagging\AzureAuth\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use TheNetworg\OAuth2\Client\Provider\Azure;
 use Laravel\Socialite\Facades\Socialite;
 
@@ -16,6 +17,7 @@ class AzureAuth
     private array $user = [];
     function __construct()
     {
+
         $this->provider = new Azure([
             'clientId'          => config('azureauth.azureClientID'),
             'clientSecret'      => config('azureauth.azureClientSecret'),
@@ -35,17 +37,35 @@ class AzureAuth
      */
     public function handle(Request $request, Closure $next)
     {
-        config(['services.azure.redirect' => url()->current()]);
+        if(envNoAuth())
+        {
+            return $next($request);
+        }
         if($this->ignoreRoute($request) === false)
         {
+            logDebug('Authenticating');
             try {
                 $this->validateAuthHeader($request);
-                $this->setEmail($request);
-                $this->setOid($request);
             }catch(\Exception $e)
             {
-                return Socialite::driver('azure')->stateless()->redirect();
+                $query = [];
+                $url = parse_url($request->getRequestUri());
+                if(!isset($url['query']))
+                {
+                    $query = (object)[];
+                }elseif(is_string($url['query']))
+                {
+                    parse_str($url['query'],$query);
+                }
+                unset($query->code);
+                return Socialite::driver('azure')->stateless()->with(['state' => json_encode(['path' => $url['path'],'query' => $query])])->redirect();
             }
+            $this->setEmail($request);
+            $this->setOid($request);
+            logDebug('Authenticated');
+        }else
+        {
+            logInfo($request->getRequestUri());
         }
         return $next($request);
     }
@@ -95,6 +115,8 @@ class AzureAuth
         }catch(\Exception $e)
         {
             $user = Socialite::driver('azure')->stateless()->user();
+            $request->request->add(['token' => $user->accessTokenResponseBody['access_token']]);
+            $request->request->add(['user_oid' => $user->getId()]);
             $this->user = ['upn' => $user->getEmail(),'oid' => $user->getId()];
         }
     }
@@ -120,10 +142,12 @@ class AzureAuth
     {
         if($this->deviceAuthorizing($request))
         {
+            config(['current_user_oid' => $request->header('User',config('azureauth.system_user_oid'))]);
             $this->user_oid = (string) $request->header('User',config('azureauth.system_user_oid'));
         }else
         {
             $token = $this->getToken($request);
+            config(['current_user_oid' => $token['oid']]);
             $this->email = $token['oid'];
         }
     }

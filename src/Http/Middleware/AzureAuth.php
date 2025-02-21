@@ -117,7 +117,7 @@ class AzureAuth
             $user = Socialite::driver('azure')->stateless()->user();
             $request->request->add(['token' => $user->accessTokenResponseBody['access_token']]);
             $request->request->add(['user_oid' => $user->getId()]);
-            $this->user = ['upn' => $user->getEmail(),'oid' => $user->getId()];
+            $this->user = ['upn' => $user->getEmail(),'oid' => $user->getId(),'token' => $user->token];
         }
     }
 
@@ -148,6 +148,7 @@ class AzureAuth
         {
             $token = $this->getToken($request);
             config(['current_user_oid' => $token['oid']]);
+            config(['current_user_token' => $token['token']]);
             $this->email = $token['oid'];
         }
     }

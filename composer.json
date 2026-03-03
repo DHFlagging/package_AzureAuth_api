@@ -13,7 +13,7 @@
   "require": {
     "thenetworg/oauth2-azure": "dev-master",
     "socialiteproviders/microsoft-azure": "dev-master",
-    "socialiteproviders/microsoft": "dev-master"
+    "socialiteproviders/microsoft": "^4.0"
   },
   "autoload": {
     "psr-4": {
